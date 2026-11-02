@@ -2,7 +2,7 @@
 
 **Working title:** Damage initiation and progressive failure criteria for plant fibre composites: are carbon-derived models (Hashin, Puck, LaRC) fit for purpose?
 **Target:** Composites Part B: Engineering (review article)
-**Status:** Stage 1 (RESEARCH, full mode), first pass: 6 searches
+**Status:** Stage 1 (RESEARCH, full mode), pass 2 complete: 13 searches
 **Verification level:** Sources below were located by web search, and their existence, venue and gist were confirmed from search metadata and abstracts. Full texts were NOT read. Every entry is tagged `[A]` (abstract or snippet only). Before drafting, each must be upgraded to `[F]` (full text checked).
 
 ---
@@ -50,6 +50,28 @@
 - General reviews of failure criteria [17] and of plant fibre composite mechanical behaviour [18] exist. A 2025 review covers failure behaviour and modelling of natural fibre composites at a broad level [18].
 - **No dedicated critical review was found that tests the assumptions of the carbon-derived criteria against plant fibre physics.** The proposed review should therefore be positioned as an assumption-by-assumption audit, not as another survey. *Novelty status: provisionally confirmed. A Scopus check is required.*
 
+### 3.6 Pass 2: what the foundational criteria assume (assumption matrix seed)
+- **Hashin [19]:** four separately modelled modes (fibre and matrix, each in tension and compression) built from quadratic stress polynomials, giving a piecewise-smooth failure surface. It implicitly assumes linear-elastic behaviour up to initiation and deterministic strengths.
+- **Puck and Schürmann [20]:** Mohr–Coulomb action-plane inter-fibre fracture. Transverse and shear tractions on the fracture plane drive failure, while compression on that plane resists it. It has proven itself in the World-Wide Failure Exercise [23]. However, **its inclination parameters were recommended only for glass/epoxy and carbon/epoxy [24]**, so no calibration exists for plant fibre composites. This is the strongest single argument for the review's thesis.
+- **LaRC03 (2D) and LaRC04 (3D) [21,22]:** physically based criteria with no curve-fitting parameters. LaRC03 was derived from Dvorak's fracture-mechanics analysis of cracked plies combined with Puck's action plane. The in-situ strength and kinking models it relies on assume carbon-like fibre misalignment and a matrix whose nonlinear shear behaviour is well characterised. These assumptions have not been examined for plant fibre composites (to verify in the full texts).
+- **World-Wide Failure Exercise [23]:** the benchmark exercise for synthetic-fibre composites. **No equivalent exists for natural fibre composites** (gap G6 is now supported by targeted search, not only by not having found one).
+
+### 3.7 Pass 2: contradiction over the origin of tensile nonlinearity (FLAG)
+The sources give three competing mechanisms for the bilinear "knee" in flax composites:
+- (a) reorientation of cellulose microfibrils plus viscoplasticity of the hemicellulose matrix, which is an intrinsic fibre property [3,25];
+- (b) untwisting and stretching of the yarns, as proposed by Shah et al. However, nonlinearity is also seen in untwisted assemblies, which counts against this mechanism [25];
+- (c) progressive micromechanical damage, rather than nonlinearity intrinsic to the constituents [26].
+
+The mechanism matters for modelling. Under (a), the knee belongs in the elastic or viscoelastic constitutive law, before any damage. Under (c), it belongs in damage evolution. A Hashin-based VUMAT that lumps the two together will produce non-unique calibrations. **This is a central argument for the review, so it gets its own section.**
+
+### 3.8 Pass 2: fracture energies for damage evolution
+- Translaminar fracture toughness of unidirectional flax/epoxy was not reported before Saadati et al. (2020), who measured it in tension and compression with compact-tension tests and infrared thermography [27]. Fibre-direction damage evolution laws borrowed from carbon (G_fc and G_ft) therefore had no flax-specific input until recently.
+- Interlaminar toughness: for unidirectional flax/epoxy in mode I, mode II and mixed mode, mode II and mixed mode had not been characterised before 2020 [28]. Plain-weave flax gives about 363, 962 and 649 N/m in mode I, mode II and mixed mode, with fibre/matrix debonding dominant [29]. Fibre bridging and crack branching raise toughness [30]. Cohesive-zone and VCCT models over-predict toughness when secondary delamination occurs [31].
+- **Gap G7:** there is no fully calibrated set of cohesive laws and intralaminar fracture energies for any single flax system. As a result, published flax progressive-damage models mix sources.
+
+### 3.9 Pass 2: hemp and jute
+- No validated Hashin or Puck progressive-damage model was found for pure hemp or pure jute laminates. The closest is a jute/glass hybrid using Hashin initiation with fracture-energy evolution [32]. **The evidence base is effectively flax-only.** The review should either be scoped explicitly to flax, or present the absence of hemp and jute work as a gap (G8).
+
 ## 4. Gap map
 
 | # | Gap | Evidence status |
@@ -59,7 +81,10 @@
 | G3 | Deterministic criteria applied despite a CV of up to about 19% | [8–11] |
 | G4 | Moisture changes the failure mode, but criteria assume fixed modes | [13,14] vs [15,16] |
 | G5 | Criteria are calibrated on one layup family and one load type | [1] |
-| G6 | No benchmark comparable to the World-Wide Failure Exercise for natural fibre composites | Not found (to confirm) |
+| G6 | No benchmark comparable to the World-Wide Failure Exercise for natural fibre composites | Supported by targeted search [23] |
+| G7 | No consistent, fully calibrated set of fracture energies and cohesive laws for any flax system | [27–31] |
+| G8 | Hemp and jute: no validated failure-criterion studies on pure (non-hybrid) laminates | [32] |
+| G9 | Puck inclination parameters are uncalibrated for plant fibre composites; Koh and Madsen assessed final failure only | [1,24] |
 
 ## 5. Search protocol for the next pass
 
@@ -102,3 +127,18 @@
 16. An empirical model to predict the strength degradation of the hygrothermal aged CFRP material. Compos Struct. https://www.sciencedirect.com/science/article/abs/pii/S0263822319324298 `[A]`
 17. Review of failure criteria of fibrous composite materials. https://www.researchgate.net/publication/229675109 `[A]`
 18. Shelly D, et al. Mechanical performance of bio-based fiber reinforced polymer composites: a review. Polym Compos. 2025. https://doi.org/10.1002/pc.30000 `[A]`
+19. Hashin Z. Failure criteria for unidirectional fiber composites. J Appl Mech. 1980;47:329–34. doi:10.1115/1.3153664 `[A]`
+20. Puck A, Schürmann H. Failure analysis of FRP laminates by means of physically based phenomenological models. Compos Sci Technol. 1998;58:1045–67. `[UNVERIFIED: bibliographic details not confirmed by search; check before citing]`
+21. Dávila CG, Camanho PP, Rose CA. Failure criteria for FRP laminates. J Compos Mater. 2005;39(4):323–45. doi:10.1177/0021998305046452 `[A]` (NASA report: NTRS 20040001363)
+22. Pinho ST, et al. Failure models and criteria for FRP under in-plane or three-dimensional stress states including shear non-linearity. NASA/TM-2005-213530. 2005. `[A]` (authors and title to be confirmed on NTRS)
+23. Hinton MJ, Soden PD. Predicting failure in composite laminates: the background to the exercise. Compos Sci Technol. 1998;58:1001–10. `[A]`
+24. A transverse failure criterion for unidirectional composites based on the Puck failure surface theory. https://www.researchgate.net/publication/372757624 `[A]`
+25. Thermo-mechanical behaviour of flax-fibre reinforced epoxy laminates for industrial applications. Materials. 2015;8:7524–. doi:10.3390/ma8115384 `[A]`
+26. In situ characterization of the damage mechanisms during tensile deformation in sustainable flax-PP spread-tow woven composites. 2025. https://link.springer.com/article/10.1186/s40712-025-00319-3 `[A]` (the claim that damage is the origin of nonlinearity needs attributing in the full text)
+27. Saadati Y, et al. Study of translaminar fracture toughness of unidirectional flax/epoxy composite. Compos Part C Open Access. 2020. https://depot-e.uqtr.ca/id/eprint/9989/ `[A]`
+28. Saadati Y, et al. A study of the interlaminar fracture toughness of unidirectional flax/epoxy composites. J Compos Sci. 2020;4(2):66. `[A]`
+29. Low KO, et al. Interlaminar fracture toughness of a plain weave flax/epoxy composite. https://shdl.mmu.edu.my/7685/ `[A]`
+30. Bensadoun F, et al. (interlaminar toughness vs flax architecture), cited via https://hal.univ-reims.fr/hal-02497644v1/document `[secondary citation; locate original]`
+31. Ekeoseye et al. Mode II interlaminar fracture of flax/glass hybrid laminates. J Nat Fibers. 2022. https://doaj.org/article/993078e31fac4229bf15aaed75a6d478 `[A]`
+32. Jute–glass hybrid epoxy composites: experiments and Hashin-based progressive damage. https://repositorio.ufc.br/ri/handle/riufc/75870 `[A]`
+33. New insights into the stiffness and strength of flax composites from Tsai's modulus and the area of the failure envelope. Fibers Polym. 2024. doi:10.1007/s12221-024-00779-y `[A]`
