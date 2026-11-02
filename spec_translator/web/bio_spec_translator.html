@@ -1,0 +1,323 @@
+<title>Bio-Composite Spec Translator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: lab worksheet. Inputs column at left, results column at right; stacks on phones. */
+:root {
+  --bg: #f6f5ef;        /* retted-flax paper */
+  --panel: #ffffff;
+  --fg: #1f2420;
+  --muted: #5d665e;
+  --line: #d9dccf;
+  --accent: #2f6b45;    /* flax-stem green */
+  --accent-soft: #e3eee5;
+  --glass: #3c6e8f;     /* glass reference */
+  --pass: #2f7d4a; --fail: #a8452f; --warn: #9a6b12;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151916; --panel: #1d221e; --fg: #e6eae3; --muted: #9aa49b; --line: #323a33;
+  --accent: #7cc497; --accent-soft: #23362a; --glass: #7fb3d6;
+  --pass: #6fcf8f; --fail: #e98a72; --warn: #e0b45a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151916; --panel: #1d221e; --fg: #e6eae3; --muted: #9aa49b; --line: #323a33;
+  --accent: #7cc497; --accent-soft: #23362a; --glass: #7fb3d6;
+  --pass: #6fcf8f; --fail: #e98a72; --warn: #e0b45a; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 20px }
+header h1 { font: 700 clamp(1.6rem, 3vw, 2.2rem)/1.1 var(--display); margin: 0; letter-spacing: -0.01em; text-wrap: balance }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 70ch }
+.badge { display: inline-block; font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--warn); border: 1px solid var(--warn); border-radius: 4px; padding: 2px 6px; margin-top: 8px }
+.grid { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 20px; align-items: start }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; min-width: 0 }
+.panel h2 { font: 600 1.05rem var(--display); margin: 0 0 10px }
+fieldset { border: 0; padding: 0; margin: 0 0 14px; display: grid; gap: 8px }
+legend { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px }
+label { display: grid; gap: 3px; font-size: 13px; color: var(--muted) }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+input, select { font: 14px var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 5px; padding: 6px 8px; width: 100%; min-width: 0 }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px }
+.check { display: flex; gap: 6px; align-items: center; color: var(--fg) } .check input { width: auto }
+button { font: 600 15px var(--body); background: var(--accent); color: var(--panel); border: 0; border-radius: 6px;
+  padding: 10px 14px; cursor: pointer; width: 100% }
+button:hover { filter: brightness(1.08) }
+.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); width: auto; padding: 6px 10px; font-size: 13px }
+details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px }
+summary { cursor: pointer; font-weight: 600; font-size: 14px }
+.results { display: grid; gap: 16px }
+.verdict { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px }
+.stat { border-left: 3px solid var(--accent); padding: 4px 10px }
+.stat.ref { border-color: var(--glass) }
+.stat b { display: block; font: 600 1.35rem var(--display); font-variant-numeric: tabular-nums }
+.stat span { font-size: 12px; color: var(--muted) }
+.best-name { font: 600 14px var(--mono); overflow-wrap: anywhere }
+.scroll { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font: 13px var(--mono); font-variant-numeric: tabular-nums }
+th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap }
+th:first-child, td:first-child { text-align: left }
+th { font: 600 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted) }
+tr.sel td { background: var(--accent-soft) }
+.pos { color: var(--fail) } .neg { color: var(--pass) }
+.pill { font: 600 11px var(--mono); padding: 1px 6px; border-radius: 10px; border: 1px solid currentColor }
+.pill.ok { color: var(--pass) } .pill.no { color: var(--fail) }
+.note { font-size: 13px; color: var(--muted); margin: 0 }
+svg text { fill: var(--muted); font: 11px var(--mono) }
+.mat-table input { padding: 4px 6px; font-size: 12px }
+.mat-table td { padding: 3px 4px }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Bio-Composite Spec Translator</h1>
+    <p>Enter the glass-fibre laminate you use today. The tool searches flax and flax/glass hybrid stacks that keep the same stiffness and load capacity, then ranks them by mass, CO₂ or cost. It uses classical laminate theory with Tsai–Wu and Hashin first-ply failure.</p>
+    <span class="badge">Screening only · example material data</span>
+  </header>
+
+  <div class="grid">
+    <form class="panel" id="form">
+      <h2>Reference part</h2>
+      <fieldset>
+        <legend>Laminate</legend>
+        <label>Half-stack angles, outer to mid-plane (deg)<input id="layup" value="0,45,-45,90"></label>
+        <div class="row2">
+          <label>Reference ply<select id="refKey"></select></label>
+          <label>Bio ply<select id="bioKey"></select></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Load per unit width</legend>
+        <div class="row2">
+          <label>Nx (N/mm)<input id="Nx" type="number" value="100"></label>
+          <label>Mx (N·mm/mm)<input id="Mx" type="number" value="20"></label>
+          <label>Ny (N/mm)<input id="Ny" type="number" value="0"></label>
+          <label>My (N·mm/mm)<input id="My" type="number" value="0"></label>
+          <label>Nxy (N/mm)<input id="Nxy" type="number" value="0"></label>
+          <label>Mxy (N·mm/mm)<input id="Mxy" type="number" value="0"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Requirements</legend>
+        <label>Strength check<select id="mode">
+          <option value="match">At least the reference's load capacity</option>
+          <option value="abs">Failure index × safety factor ≤ 1</option></select></label>
+        <div class="row2">
+          <label>Safety factor<input id="sf" type="number" step="0.1" value="1.5"></label>
+          <label>Stiffness ratio vs ref<input id="sr" type="number" step="0.05" value="1"></label>
+        </div>
+        <label class="check"><input id="memb" type="checkbox" checked> Membrane stiffness (A11, A22, A66)</label>
+        <label class="check"><input id="bend" type="checkbox" checked> Bending stiffness (D11, D22)</label>
+      </fieldset>
+      <fieldset>
+        <legend>Flax wet/aged knock-down</legend>
+        <div class="row2">
+          <label>Strength factor<input id="kds" type="number" step="0.05" value="0.75"></label>
+          <label>Stiffness factor<input id="kde" type="number" step="0.05" value="0.9"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Search</legend>
+        <div class="row2">
+          <label>Rank by<select id="obj">
+            <option value="mass">Mass</option><option value="co2">CO₂</option>
+            <option value="cost">Cost</option><option value="t">Thickness</option></select></label>
+          <label>Max plies per group<input id="maxg" type="number" min="1" max="8" value="5"></label>
+        </div>
+      </fieldset>
+      <button type="submit">Translate</button>
+      <details>
+        <summary>Edit material data</summary>
+        <p class="note">Example literature-typical values. Replace them with your supplier, test and LCA numbers.</p>
+        <div class="scroll"><table class="mat-table" id="matTable"></table></div>
+      </details>
+    </form>
+
+    <section class="results" id="results"></section>
+  </div>
+</div>
+
+<script>
+// ---------- materials (indicative; CO2 kg/kg and cost EUR/kg are placeholders) ----------
+const LIB = {
+  glass_ud: {name:"UD E-glass/epoxy", E1:40000,E2:10000,G12:4000,nu12:0.28,Xt:1000,Xc:600,Yt:30,Yc:110,S:70,t:0.25,rho:1.95,co2:3.0,cost:4.0,wet:false},
+  flax_ud:  {name:"UD flax/epoxy",    E1:30000,E2:4000, G12:2000,nu12:0.35,Xt:300, Xc:130,Yt:25,Yc:90, S:40,t:0.25,rho:1.30,co2:2.0,cost:9.0,wet:true},
+  flax_twill:{name:"Twill flax/epoxy",E1:9500, E2:9500, G12:1800,nu12:0.10,Xt:110, Xc:90, Yt:110,Yc:90,S:35,t:0.30,rho:1.30,co2:2.0,cost:8.0,wet:true},
+};
+const FIELDS = ["E1","E2","G12","nu12","Xt","Xc","Yt","Yc","S","t","rho","co2","cost"];
+const UNITS = {E1:"MPa",E2:"MPa",G12:"MPa",nu12:"",Xt:"MPa",Xc:"MPa",Yt:"MPa",Yc:"MPa",S:"MPa",t:"mm",rho:"g/cm³",co2:"kg CO₂/kg",cost:"€/kg"};
+
+// ---------- classical laminate theory ----------
+function Q(p){ const nu21=p.nu12*p.E2/p.E1, d=1-p.nu12*nu21;
+  return [[p.E1/d,p.nu12*p.E2/d,0],[p.nu12*p.E2/d,p.E2/d,0],[0,0,p.G12]]; }
+function Ts(th){ const c=Math.cos(th*Math.PI/180), s=Math.sin(th*Math.PI/180);
+  return [[c*c,s*s,2*c*s],[s*s,c*c,-2*c*s],[-c*s,c*s,c*c-s*s]]; }
+const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((a,v,k)=>a+v*B[k][j],0)));
+const mv=(A,v)=>A.map(r=>r.reduce((a,x,k)=>a+x*v[k],0));
+function inv3(m){ const [a,b,c]=m[0],[d,e,f]=m[1],[g,h,i]=m[2];
+  const A=e*i-f*h,B=-(d*i-f*g),C=d*h-e*g, det=a*A+b*B+c*C;
+  return [[A,-(b*i-c*h),b*f-c*e],[B,a*i-c*g,-(a*f-c*d)],[C,-(a*h-b*g),a*e-b*d]].map(r=>r.map(x=>x/det)); }
+function Qbar(p,th){ const T=Ts(th), R=[[1,0,0],[0,1,0],[0,0,2]], Ri=[[1,0,0],[0,1,0],[0,0,.5]];
+  const Te=mm(mm(R,T),Ri); return mm(mm(inv3(T),Q(p)),Te); }
+function solve(A,b){ const n=b.length, M=A.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){ let p=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[p][c])) p=r;
+    [M[c],M[p]]=[M[p],M[c]];
+    for(let r=0;r<n;r++) if(r!==c){ const f=M[r][c]/M[c][c]; for(let k=c;k<=n;k++) M[r][k]-=f*M[c][k]; } }
+  return M.map((r,i)=>r[n]/r[i]); }
+
+function lamProps(plies){
+  const h=plies.reduce((a,[p])=>a+p.t,0); const z=[-h/2]; plies.forEach(([p])=>z.push(z[z.length-1]+p.t));
+  const A=[[0,0,0],[0,0,0],[0,0,0]], B=A.map(r=>[...r]), D=A.map(r=>[...r]);
+  plies.forEach(([p,th],k)=>{ const q=Qbar(p,th);
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++){ A[i][j]+=q[i][j]*(z[k+1]-z[k]);
+      B[i][j]+=q[i][j]*(z[k+1]**2-z[k]**2)/2; D[i][j]+=q[i][j]*(z[k+1]**3-z[k]**3)/3; } });
+  const mass=plies.reduce((a,[p])=>a+p.t*p.rho,0);
+  return {plies,h,z,A,B,D,mass,co2:plies.reduce((a,[p])=>a+p.t*p.rho*p.co2,0),cost:plies.reduce((a,[p])=>a+p.t*p.rho*p.cost,0)}; }
+
+function tsaiWu(p,[s1,s2,t]){ const F1=1/p.Xt-1/p.Xc,F2=1/p.Yt-1/p.Yc,F11=1/(p.Xt*p.Xc),F22=1/(p.Yt*p.Yc),F66=1/p.S**2,F12=-0.5*Math.sqrt(F11*F22);
+  const a=F11*s1*s1+F22*s2*s2+F66*t*t+2*F12*s1*s2, b=F1*s1+F2*s2;
+  if(a<=1e-30) return Math.max(b,0); const R=(-b+Math.sqrt(b*b+4*a))/(2*a); return 1/R; }
+function hashin(p,[s1,s2,t]){ const m={
+  "fibre tension": s1>=0?(s1/p.Xt)**2+(t/p.S)**2:0, "fibre compression": s1<0?(s1/p.Xc)**2:0,
+  "matrix tension": s2>=0?(s2/p.Yt)**2+(t/p.S)**2:0,
+  "matrix compression": s2<0?(s2/(2*p.S))**2+((p.Yc/(2*p.S))**2-1)*s2/p.Yc+(t/p.S)**2:0 };
+  const k=Object.keys(m).reduce((a,b)=>m[a]>=m[b]?a:b); return [Math.sqrt(Math.max(m[k],0)),k]; }
+
+function fpf(L,N,M){ const K=[...L.A.map((r,i)=>[...r,...L.B[i]]),...L.B.map((r,i)=>[...r,...L.D[i]])];
+  const sol=solve(K,[...N,...M]), e0=sol.slice(0,3), k=sol.slice(3);
+  let tw=0,hs=0,mode="-";
+  L.plies.forEach(([p,th],i)=>{ for(const zz of [L.z[i],L.z[i+1]]){
+    const eps=e0.map((v,j)=>v+zz*k[j]), sm=mv(Ts(th),mv(Qbar(p,th),eps));
+    tw=Math.max(tw,tsaiWu(p,sm)); const [h,md]=hashin(p,sm); if(h>hs){hs=h;mode=`${md}, ${th}° ply`;} } });
+  return {fi:Math.max(tw,hs),tw,hs,mode}; }
+
+// ---------- translator ----------
+function groups(half){ const g=[],seen=new Set();
+  for(const a of half){ const off=a!==0&&a!==90, key=off?Math.abs(a):a; if(seen.has(key)) continue; seen.add(key);
+    g.push(off&&half.includes(-a)?[key,-key]:[a]); } return g; }
+function interleave(g,counts){ const r=[...counts], out=[]; while(r.some(x=>x)) g.forEach((gg,i)=>{ if(r[i]){out.push(...gg); r[i]--;} }); return out; }
+const kdOf=(p,kd)=>p.wet?{...p,E1:p.E1*kd.e,E2:p.E2*kd.e,G12:p.G12*kd.e,Xt:p.Xt*kd.s,Xc:p.Xc*kd.s,Yt:p.Yt*kd.s,Yc:p.Yc*kd.s,S:p.S*kd.s}:p;
+
+function translate(cfg){
+  const half=cfg.layup, sym=h=>[...h,...[...h].reverse()];
+  const ref=lamProps(sym(half).map(a=>[cfg.ref,a]));
+  const load=[...cfg.N,...cfg.M].some(v=>v!==0);
+  const refF=load?fpf(ref,cfg.N,cfg.M):null;
+  const G=groups(half), out=[];
+  const counts=G.map(()=>0);
+  const recurse=i=>{ if(i===G.length){ if(!counts.some(x=>x)) return;
+      const core=interleave(G,counts);
+      for(let k=0;k<=2;k++){
+        const skins=Array.from({length:k},(_,j)=>half[j%half.length]);
+        const hp=[...skins.map(a=>[cfg.ref,a]),...core.map(a=>[cfg.bio,a])];
+        const L=lamProps(sym(hp)); const Lkd=lamProps(L.plies.map(([p,a])=>[kdOf(p,cfg.kd),a]));
+        out.push(evaluate(L,Lkd,ref,refF,cfg,k,G,counts)); }
+      return; }
+    for(let c=0;c<=cfg.maxg;c++){ counts[i]=c; recurse(i+1);} };
+  recurse(0);
+  return {ref,refF,cands:out};
+}
+function evaluate(L,Lkd,ref,refF,cfg,k,G,counts){
+  const r={A11:L.A[0][0]/ref.A[0][0],A22:L.A[1][1]/ref.A[1][1],A66:L.A[2][2]/ref.A[2][2],D11:L.D[0][0]/ref.D[0][0],D22:L.D[1][1]/ref.D[1][1]};
+  let ok=true; const keys=[...(cfg.memb?["A11","A22","A66"]:[]),...(cfg.bend?["D11","D22"]:[])];
+  keys.forEach(x=>{ if(r[x]<cfg.sr-1e-9) ok=false; });
+  let f=null, cap=null;
+  if(refF){ f=fpf(Lkd,cfg.N,cfg.M);
+    if(cfg.mode==="abs") ok=ok&&f.fi*cfg.sf<=1; else { cap=refF.fi/f.fi; ok=ok&&f.fi<=refF.fi*(1+1e-9); } }
+  const tag=G.map((g,i)=>`${g.map(a=>(a>0&&g.length>1?"±":"")+Math.abs(a)).slice(0,1)}×${counts[i]}`).join(" ");
+  const label=(k?`${k} glass skin/side + flax `:"Flax only ")+`[${tag}]`;
+  return {label,L,ok,r,f,cap,plies:L.plies.length,
+    dm:100*(L.mass/ref.mass-1), dco2:100*(L.co2/ref.co2-1), dcost:100*(L.cost/ref.cost-1)};
+}
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+const mats=JSON.parse(JSON.stringify(LIB));
+for(const sel of ["refKey","bioKey"]) for(const [k,v] of Object.entries(mats)) $(sel).add(new Option(v.name,k));
+$("refKey").value="glass_ud"; $("bioKey").value="flax_ud";
+
+function drawMatTable(){ const keys=Object.keys(mats);
+  $("matTable").innerHTML=`<tr><th>Property</th>${keys.map(k=>`<th>${mats[k].name}</th>`).join("")}</tr>`+
+    FIELDS.map(f=>`<tr><td>${f} <span class="note">${UNITS[f]}</span></td>${keys.map(k=>`<td><input id="m_${k}_${f}" type="number" step="any" value="${mats[k][f]}" data-k="${k}" data-f="${f}"></td>`).join("")}</tr>`).join("");
+  $("matTable").querySelectorAll("input").forEach(i=>i.addEventListener("change",e=>{ const v=parseFloat(e.target.value); if(isFinite(v)&&v>0) mats[e.target.dataset.k][e.target.dataset.f]=v; run(); }));
+}
+
+const fmt=(x,d=1)=>(x>0?"+":"")+x.toFixed(d);
+const cls=x=>x>0.05?"pos":x<-0.05?"neg":"";
+
+function run(){
+  const layup=$("layup").value.split(/[,\s/]+/).filter(Boolean).map(Number);
+  const res=$("results");
+  if(!layup.length||layup.some(isNaN)){ res.innerHTML=`<div class="panel"><p>Enter the half-stack as comma-separated angles, for example <code>0,45,-45,90</code>.</p></div>`; return; }
+  const num=id=>parseFloat($(id).value)||0;
+  const cfg={layup,ref:mats[$("refKey").value],bio:mats[$("bioKey").value],
+    N:[num("Nx"),num("Ny"),num("Nxy")],M:[num("Mx"),num("My"),num("Mxy")],
+    mode:$("mode").value,sf:num("sf")||1,sr:num("sr")||1,memb:$("memb").checked,bend:$("bend").checked,
+    kd:{s:num("kds")||1,e:num("kde")||1},maxg:Math.min(8,Math.max(1,Math.round(num("maxg"))||5))};
+  const t0=performance.now(); const {ref,refF,cands}=translate(cfg); const ms=performance.now()-t0;
+  const key={mass:c=>c.L.mass,co2:c=>c.L.co2,cost:c=>c.L.cost,t:c=>c.L.h}[$("obj").value];
+  const pass=cands.filter(c=>c.ok).sort((a,b)=>key(a)-key(b));
+  const top=pass.slice(0,12), best=top[0];
+
+  const refFail=refF&&cfg.mode==="abs"&&refF.fi*cfg.sf>1;
+  res.innerHTML=`
+  <div class="panel">
+    <h2>${best?"Best substitute":"No substitute found"}</h2>
+    ${best?`<p class="best-name">${best.label}</p>
+    <div class="verdict">
+      <div class="stat ref"><b>${ref.h.toFixed(2)} → ${best.L.h.toFixed(2)} mm</b><span>Thickness, ${ref.plies.length} → ${best.plies} plies</span></div>
+      <div class="stat"><b class="${cls(best.dm)}">${fmt(best.dm)} %</b><span>Areal mass (${best.L.mass.toFixed(2)} kg/m²)</span></div>
+      <div class="stat"><b class="${cls(best.dco2)}">${fmt(best.dco2)} %</b><span>CO₂ per m² (placeholder factors)</span></div>
+      <div class="stat"><b class="${cls(best.dcost)}">${fmt(best.dcost)} %</b><span>Material cost (placeholder)</span></div>
+    </div>
+    <p class="note" style="margin-top:10px">Critical failure: ${best.f?best.f.mode:"no load given"}${best.cap?` · load capacity ${best.cap.toFixed(2)}× the reference`:""}.</p>`
+    :`<p class="note">No candidate meets every requirement. Lower the stiffness ratio, raise the plies per group, or untick a stiffness check.</p>`}
+    ${refFail?`<p class="note" style="color:var(--warn)">The glass reference itself fails this load at SF ${cfg.sf} (index ${(refF.fi*cfg.sf).toFixed(2)}). Check the load case, or use the "reference's load capacity" check.</p>`:""}
+  </div>
+  <div class="panel">
+    <h2>Mass vs CO₂ for every candidate</h2>
+    <p class="note">${cands.length} stacks checked in ${ms.toFixed(0)} ms, ${pass.length} pass. Green dots meet all requirements; the ring marks the best.</p>
+    ${scatter(cands,best)}
+  </div>
+  <div class="panel">
+    <h2>Passing candidates</h2>
+    ${top.length?`<div class="scroll"><table>
+      <tr><th>Stack</th><th>Plies</th><th>t (mm)</th><th>Mass</th><th>CO₂</th><th>Cost</th><th>A11</th><th>D11</th><th>Capacity</th></tr>
+      ${top.map((c,i)=>`<tr class="${i===0?"sel":""}"><td>${c.label}</td><td>${c.plies}</td><td>${c.L.h.toFixed(2)}</td>
+        <td class="${cls(c.dm)}">${fmt(c.dm)}%</td><td class="${cls(c.dco2)}">${fmt(c.dco2)}%</td><td class="${cls(c.dcost)}">${fmt(c.dcost)}%</td>
+        <td>${c.r.A11.toFixed(2)}</td><td>${c.r.D11.toFixed(2)}</td><td>${c.f?(c.cap?c.cap.toFixed(2)+"×":(1/(c.f.fi*cfg.sf)).toFixed(2)+"×"):"–"}</td></tr>`).join("")}
+    </table></div>`:`<p class="note">None.</p>`}
+    <p class="note" style="margin-top:8px">Stiffness columns are ratios to the reference. Capacity is the load the flax stack carries (wet/aged) relative to the reference${cfg.mode==="abs"?", or the margin over the safety factor":""}. Changes in red are increases.</p>
+  </div>`;
+}
+
+function scatter(cands,best){
+  const W=640,H=300,P={l:52,r:14,t:12,b:40};
+  const xs=cands.map(c=>c.dm), ys=cands.map(c=>c.dco2);
+  const x0=Math.min(0,...xs), x1=Math.max(...xs), y0=Math.min(0,...ys), y1=Math.max(...ys);
+  const sx=v=>P.l+(v-x0)/((x1-x0)||1)*(W-P.l-P.r), sy=v=>H-P.b-(v-y0)/((y1-y0)||1)*(H-P.t-P.b);
+  const ticks=(a,b)=>{ const s=Math.pow(10,Math.floor(Math.log10((b-a)||1))), st=(b-a)/s>5?s*2:s; const r=[]; for(let v=Math.ceil(a/st)*st;v<=b;v+=st) r.push(+v.toFixed(6)); return r; };
+  let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Scatter of mass change against CO2 change">`;
+  ticks(x0,x1).forEach(v=>g+=`<line x1="${sx(v)}" x2="${sx(v)}" y1="${P.t}" y2="${H-P.b}" stroke="var(--line)"/><text x="${sx(v)}" y="${H-P.b+16}" text-anchor="middle">${v}%</text>`);
+  ticks(y0,y1).forEach(v=>g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${P.l-6}" y="${sy(v)+4}" text-anchor="end">${v}%</text>`);
+  g+=`<line x1="${sx(0)}" x2="${sx(0)}" y1="${P.t}" y2="${H-P.b}" stroke="var(--glass)" stroke-dasharray="4 3"/><line x1="${P.l}" x2="${W-P.r}" y1="${sy(0)}" y2="${sy(0)}" stroke="var(--glass)" stroke-dasharray="4 3"/>`;
+  cands.filter(c=>!c.ok).forEach(c=>g+=`<circle cx="${sx(c.dm)}" cy="${sy(c.dco2)}" r="2.2" fill="var(--muted)" opacity=".35"/>`);
+  cands.filter(c=>c.ok).forEach(c=>g+=`<circle cx="${sx(c.dm)}" cy="${sy(c.dco2)}" r="3.2" fill="var(--pass)" opacity=".8"/>`);
+  if(best) g+=`<circle cx="${sx(best.dm)}" cy="${sy(best.dco2)}" r="8" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  g+=`<text x="${(W+P.l)/2}" y="${H-6}" text-anchor="middle">Areal mass change vs glass reference</text>
+      <text x="12" y="${(H-P.b)/2}" transform="rotate(-90 12 ${(H-P.b)/2})" text-anchor="middle">CO₂ change</text></svg>`;
+  return `<div class="scroll">${g}</div>`;
+}
+
+$("form").addEventListener("submit",e=>{e.preventDefault(); run();});
+drawMatTable(); run();
+</script>
