@@ -1,0 +1,384 @@
+<title>Virtual Composites Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a lab bench in three stations (Make → Test → Analyse) as tabs; each station is a two-column worksheet that stacks on phones. */
+:root {
+  --bg: #eef1f3;       /* lab bench grey-blue */
+  --panel: #ffffff;
+  --fg: #1b2228;
+  --muted: #5b6874;
+  --line: #d3dae0;
+  --accent: #c2561a;   /* load-cell orange */
+  --accent-soft: #fbe9dd;
+  --ink: #23527a;      /* plotter ink */
+  --ok: #2e7d4f; --bad: #b23a2c; --warn: #96680f;
+  --display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12171b; --panel: #1a2126; --fg: #e4e9ed; --muted: #95a2ad; --line: #2c363e;
+  --accent: #f08a4b; --accent-soft: #3a2619; --ink: #7db4e0; --ok: #66c98d; --bad: #ef8476; --warn: #e1b55c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12171b; --panel: #1a2126; --fg: #e4e9ed; --muted: #95a2ad; --line: #2c363e;
+  --accent: #f08a4b; --accent-soft: #3a2619; --ink: #7db4e0; --ok: #66c98d; --bad: #ef8476; --warn: #e1b55c; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px }
+header { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: end; justify-content: space-between }
+h1 { font: 700 clamp(1.5rem, 3vw, 2.1rem)/1.1 var(--display); margin: 0; letter-spacing: -0.01em }
+header p { margin: 4px 0 0; color: var(--muted); max-width: 68ch }
+.batch { font: 600 12px var(--mono); color: var(--muted); text-align: right }
+.batch b { color: var(--fg) }
+nav { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--line) }
+nav button { font: 600 14px var(--body); background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted);
+  padding: 8px 12px; cursor: pointer; display: flex; gap: 8px; align-items: center }
+nav button .n { font: 600 11px var(--mono); border: 1px solid currentColor; border-radius: 50%; width: 20px; height: 20px; display: grid; place-items: center }
+nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
+nav button:disabled { opacity: .45; cursor: not-allowed }
+.station { display: grid; grid-template-columns: minmax(270px, 340px) 1fr; gap: 16px; align-items: start }
+@media (max-width: 860px) { .station { grid-template-columns: 1fr } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; min-width: 0 }
+.panel h2 { font: 600 1rem var(--display); margin: 0 0 10px }
+.stack { display: grid; gap: 16px; min-width: 0 }
+fieldset { border: 0; padding: 0; margin: 0 0 14px; display: grid; gap: 8px }
+legend { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px }
+label { display: grid; gap: 3px; font-size: 13px; color: var(--muted) }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+input, select { font: 14px var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; width: 100%; min-width: 0 }
+input[type=range] { padding: 0; accent-color: var(--accent) }
+:is(input, select, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px }
+.btn { font: 600 15px var(--body); background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 10px 14px; cursor: pointer; width: 100% }
+.btn:hover { filter: brightness(1.07) }
+.btn.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent) }
+.btn:disabled { opacity: .5; cursor: not-allowed }
+.note { font-size: 13px; color: var(--muted); margin: 0 }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px }
+.kv div { border-left: 3px solid var(--ink); padding: 2px 10px }
+.kv b { display: block; font: 600 1.15rem var(--display); font-variant-numeric: tabular-nums }
+.kv span { font-size: 12px; color: var(--muted) }
+.scroll { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font: 13px var(--mono); font-variant-numeric: tabular-nums }
+th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap }
+th:first-child, td:first-child { text-align: left }
+th { font: 600 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted) }
+tr.cur td { background: var(--accent-soft) }
+.tag { font: 600 11px var(--mono); padding: 1px 6px; border-radius: 10px; border: 1px solid currentColor }
+.tag.ok { color: var(--ok) } .tag.bad { color: var(--bad) } .tag.warn { color: var(--warn) }
+canvas { width: 100%; height: auto; display: block; border-radius: 6px; background: var(--bg) }
+.panelview { display: grid; gap: 10px }
+.answers { display: grid; gap: 10px }
+.answers .row { display: grid; grid-template-columns: 1fr 110px 90px; gap: 8px; align-items: center }
+.answers .row label { color: var(--fg); font-size: 14px }
+.res { font: 600 12px var(--mono) }
+.score { font: 700 2.4rem var(--display); font-variant-numeric: tabular-nums }
+.check { display: flex; gap: 6px; align-items: center; color: var(--fg) } .check input { width: auto }
+textarea { width: 100%; min-height: 120px; font: 12px var(--mono); background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 5px; padding: 8px }
+.hint { border-left: 3px solid var(--warn); padding: 4px 10px; font-size: 13px; color: var(--fg) }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Virtual Composites Lab</h1>
+      <p>Design a laminate, manufacture a panel with real-world defects, test coupons to ASTM D3039, and report modulus and strength from your own noisy data. Every batch is different.</p>
+    </div>
+    <div class="batch">Batch ID <b id="seedShow"></b><br>
+      <label style="display:inline-grid;margin-top:4px">Instructor seed <input id="seedIn" style="width:120px" placeholder="optional"></label></div>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" id="t1" aria-selected="true"><span class="n">1</span>Make panel</button>
+    <button role="tab" id="t2" aria-selected="false" disabled><span class="n">2</span>Test coupons</button>
+    <button role="tab" id="t3" aria-selected="false" disabled><span class="n">3</span>Analyse &amp; submit</button>
+  </nav>
+
+  <!-- STATION 1 -->
+  <section class="station" id="s1">
+    <form class="panel" id="makeForm">
+      <h2>Laminate design</h2>
+      <fieldset>
+        <legend>Constituents</legend>
+        <label>Fibre<select id="fibre">
+          <option value="glass">E-glass</option><option value="flax">Flax</option><option value="carbon">Carbon (T300-class)</option></select></label>
+        <label>Fibre volume fraction: <span id="vfShow">0.50</span><input id="vf" type="range" min="0.30" max="0.65" step="0.01" value="0.50"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Stacking</legend>
+        <label>Half-stack, outer to mid-plane (deg)<input id="layup" value="0,90"></label>
+        <label>Ply thickness (mm)<input id="tply" type="number" step="0.01" value="0.25"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Process</legend>
+        <label>Process route<select id="proc">
+          <option value="autoclave">Autoclave prepreg (low voids)</option>
+          <option value="infusion" selected>Vacuum infusion</option>
+          <option value="hand">Hand lay-up (high voids)</option></select></label>
+        <label class="check"><input id="dry" type="checkbox" checked> Fibres dried before processing</label>
+      </fieldset>
+      <button class="btn" type="submit">Manufacture panel</button>
+      <p class="note" style="margin-top:8px">Teaching model: micromechanics plus ply-discount progressive failure. Values are representative, not design data.</p>
+    </form>
+    <div class="stack" id="panelOut">
+      <div class="panel"><h2>Your panel</h2><p class="note">Choose fibre, layup and process, then manufacture. The panel's real void content, fibre misalignment and thickness come out of the process, as in a real lab.</p></div>
+    </div>
+  </section>
+
+  <!-- STATION 2 -->
+  <section class="station" id="s2" hidden>
+    <div class="panel">
+      <h2>Universal testing machine</h2>
+      <p class="note">Tensile coupon, 250 × 25 mm, 2 mm/min. Measure each coupon, then pull it.</p>
+      <div class="kv" style="margin:12px 0" id="specInfo"></div>
+      <div class="row2">
+        <button class="btn" id="pullOne">Test next coupon</button>
+        <button class="btn alt" id="pullAll">Test all</button>
+      </div>
+      <p class="note" style="margin-top:10px" id="testMsg"></p>
+    </div>
+    <div class="stack">
+      <div class="panel"><h2>Stress–strain</h2><canvas id="ssc" width="760" height="380" aria-label="Stress-strain curves"></canvas>
+        <p class="note">Stress from the nominal (measured) cross-section. Strain from the clip-on extensometer.</p></div>
+      <div class="panel"><h2>Coupon log</h2><div class="scroll"><table id="logT"></table></div></div>
+    </div>
+  </section>
+
+  <!-- STATION 3 -->
+  <section class="station" id="s3" hidden>
+    <div class="panel">
+      <h2>Raw data</h2>
+      <p class="note">Each coupon: width, thickness, peak load, failure location, and the load–strain record. Copy into Excel, Python or MATLAB.</p>
+      <label style="margin-top:8px">Coupon<select id="rawSel"></select></label>
+      <textarea id="raw" readonly aria-label="Raw test data"></textarea>
+      <div class="row2"><button class="btn alt" id="copyRaw">Copy this coupon</button><button class="btn alt" id="copySum">Copy summary table</button></div>
+      <p class="note" id="copyMsg"></p>
+      <div class="hint" style="margin-top:12px">D3039 rules used for grading: chord modulus between 1000 and 3000 µε; strength = peak load / (w·t); coupons that broke in or at the grips (location code G) are invalid and must be excluded.</div>
+    </div>
+    <div class="panel">
+      <h2>Lab report</h2>
+      <div class="answers" id="answers">
+        <div class="row"><label for="aN">Valid coupons (count)</label><input id="aN" type="number"><span class="res" id="rN"></span></div>
+        <div class="row"><label for="aE">Mean chord modulus (GPa)</label><input id="aE" type="number" step="any"><span class="res" id="rE"></span></div>
+        <div class="row"><label for="aS">Mean tensile strength (MPa)</label><input id="aS" type="number" step="any"><span class="res" id="rS"></span></div>
+        <div class="row"><label for="aCV">Strength CV (%)</label><input id="aCV" type="number" step="any"><span class="res" id="rCV"></span></div>
+        <div class="row"><label for="aP">Predicted modulus from CLT (GPa)</label><input id="aP" type="number" step="any"><span class="res" id="rP"></span></div>
+      </div>
+      <button class="btn" id="grade" style="margin-top:14px">Submit for grading</button>
+      <div id="gradeOut" style="margin-top:14px"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------- seeded RNG ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let rng, seed;
+const gauss=()=>{let u=0,v=0;while(!u)u=rng();while(!v)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const weibull=(scale,m)=>scale*Math.pow(-Math.log(1-rng()),1/m)/gammaMean(m);
+const gammaMean=m=>{const x=1+1/m;return Math.exp(lgamma(x))};
+function lgamma(z){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];z-=1;let x=c[0];for(let i=1;i<g+2;i++)x+=c[i]/(z+i);const t=z+g+.5;return .5*Math.log(2*Math.PI)+(z+.5)*Math.log(t)-t+Math.log(x)}
+
+// ---------- constituents (teaching values) ----------
+const FIB={ glass:{Ef:72000,nuf:0.22,Gf:30000,Xf:1900,Xcf:1300,m:14,rho:2.55,name:"E-glass"},
+  flax:{Ef:55000,nuf:0.30,Gf:2500,Xf:850,Xcf:500,m:6,rho:1.45,name:"Flax",knee:0.0018,soft:0.75,hygro:true},
+  carbon:{Ef:230000,nuf:0.20,Gf:15000,Xf:3500,Xcf:2200,m:18,rho:1.78,name:"Carbon"} };
+const MAT={Em:3200,num:0.35,Xm:70,rho:1.2};
+const PROC={autoclave:{void:[0.4,0.3],mis:0.8,tcv:0.015},infusion:{void:[1.5,0.6],mis:1.5,tcv:0.03},hand:{void:[4,1.5],mis:3,tcv:0.06}};
+
+function plyProps(f,vf,voids){
+  const Gm=MAT.Em/(2*(1+MAT.num)), vm=1-vf;
+  const E1=f.Ef*vf+MAT.Em*vm;
+  const ht=(Ef,Em,xi)=>{const eta=(Ef/Em-1)/(Ef/Em+xi);return Em*(1+xi*eta*vf)/(1-eta*vf)};
+  const E2=ht(f.hygro?6000:f.Ef,MAT.Em,2), G12=ht(f.Gf,Gm,1);
+  const nu12=f.nuf*vf+MAT.num*vm;
+  const vk=1-0.025*voids, vs=1-0.04*voids;       // empirical void knock-downs (per %)
+  return {E1:E1*(1-0.006*voids),E2:E2*vk,G12:G12*vk,nu12,
+    Xt:f.Xf*vf*0.85+MAT.Xm*vm*0.1, Xc:f.Xcf*vf*vs, Yt:42*vs*(f.hygro?0.75:1), Yc:140*vs, S:60*vs*(f.hygro?0.8:1),
+    m:f.m, knee:f.knee, soft:f.soft};
+}
+
+// ---------- CLT ----------
+function Qm(p,d1=1,d2=1){const E1=p.E1*d1,E2=p.E2*d2,G=p.G12*d2,nu=p.nu12*Math.min(d1,d2),n21=nu*E2/E1,d=1-nu*n21;
+  return[[E1/d,nu*E2/d,0],[nu*E2/d,E2/d,0],[0,0,G]]}
+function Tm(th){const c=Math.cos(th*Math.PI/180),s=Math.sin(th*Math.PI/180);return[[c*c,s*s,2*c*s],[s*s,c*c,-2*c*s],[-c*s,c*s,c*c-s*s]]}
+const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((a,v,k)=>a+v*B[k][j],0))), mv=(A,v)=>A.map(r=>r.reduce((a,x,k)=>a+x*v[k],0));
+function inv3(m){const[a,b,c]=m[0],[d,e,f]=m[1],[g,h,i]=m[2];const A=e*i-f*h,B=-(d*i-f*g),C=d*h-e*g,det=a*A+b*B+c*C;
+  return[[A,-(b*i-c*h),b*f-c*e],[B,a*i-c*g,-(a*f-c*d)],[C,-(a*h-b*g),a*e-b*d]].map(r=>r.map(x=>x/det))}
+function Qb(Q,th){const T=Tm(th),R=[[1,0,0],[0,1,0],[0,0,2]],Ri=[[1,0,0],[0,1,0],[0,0,.5]];return mm(mm(inv3(T),Q),mm(mm(R,T),Ri))}
+function Amat(plies,t){const A=[[0,0,0],[0,0,0],[0,0,0]];plies.forEach(pl=>{const q=Qb(Qm(pl.p,pl.d1,pl.d2),pl.th);for(let i=0;i<3;i++)for(let j=0;j<3;j++)A[i][j]+=q[i][j]*t});return A}
+const ExOf=(A,h)=>{const a=inv3(A);return 1/(a[0][0]*h)};
+
+// ---------- virtual test (ply-discount progressive failure, symmetric laminate, Nx only) ----------
+function simulateCoupon(panel,idx){
+  const {p,angles,tply}=panel;
+  const mis=gauss()*panel.misDeg;                  // coupon-level misalignment (deg)
+  const tScale=1+gauss()*panel.tcv;
+  const tTrue=tply*tScale, h=tTrue*angles.length, w=25*(1+gauss()*0.004);
+  const plies=angles.map(a=>({p,th:a+mis,d1:1,d2:1,
+    Xt:weibull(p.Xt,p.m),Yt:weibull(p.Yt,p.m*0.8),S:weibull(p.S,p.m*0.8),Xc:p.Xc,Yc:p.Yc,dead:false}));
+  const wM=w+gauss()*0.01, tM=h+gauss()*0.008;     // calipers / micrometer readings
+  const pts=[]; let eps=0, de=0.00005, peak=0, peakEps=0, failed=false;
+  while(eps<0.05 && !failed){
+    eps+=de;
+    // flax: bilinear fibre response, tangent softening above the knee
+    plies.forEach(pl=>{ if(p.knee){ const e1=eps*Math.cos(pl.th*Math.PI/180)**2; pl.d1Base = e1>p.knee ? p.soft : 1; } });
+    const A=Amat(plies.map(pl=>({...pl,d1:pl.d1*(pl.d1Base||1)})),tTrue);
+    // secant-style: integrate stress with tangent modulus
+    const Ex=ExOf(A,h); const prev=pts.length?pts[pts.length-1].s:0; const s=prev+Ex*de;
+    // ply stresses at this laminate strain (uniaxial Nx -> strains)
+    const a=inv3(A), N=[s*h,0,0], e0=mv(a,N);
+    let anyFail=false;
+    plies.forEach(pl=>{ if(pl.dead) return;
+      const sig=mv(Tm(pl.th),mv(Qb(Qm(pl.p,pl.d1,pl.d2),pl.th),e0));
+      const [s1,s2,t]=sig;
+      if(s1>pl.Xt*1 && pl.d1>0.01){ pl.d1=0.001; pl.d2=0.001; pl.dead=true; anyFail=true; }
+      else if(pl.d2>0.01 && ((s2>0?(s2/pl.Yt)**2:(s2/pl.Yc)**2)+(t/pl.S)**2>=1)){ pl.d2=0.05; anyFail=true; }
+    });
+    pts.push({e:eps,s});
+    if(s>peak){peak=s;peakEps=eps}
+    if(anyFail){ // redistribute: recompute stress drop
+      const A2=Amat(plies,tTrue), Ex2=ExOf(A2,h);
+      if(Ex2/Ex<0.08 || plies.every(pl=>pl.dead||pl.d1<0.01)) failed=true;
+      else { const sNew=Ex2*eps*(s/(Ex*eps)); /* keep strain, shed load proportionally */
+        pts.push({e:eps,s:Math.min(s,sNew)}); }
+    }
+    if(plies.filter(pl=>Math.abs(((pl.th%180)+180)%180)<45||Math.abs(((pl.th%180)+180)%180)>135).every(pl=>pl.dead) && plies.some(pl=>pl.dead)) failed=true;
+  }
+  // instrument noise + record
+  const loadNoise=0.002*peak*w*h;
+  const rec=pts.filter((_,i)=>i%2===0).map(q=>({e:+(q.e+gauss()*4e-6).toFixed(6),F:+(q.s*w*h+gauss()*loadNoise).toFixed(1)}));
+  const Fmax=Math.max(...rec.map(r=>r.F));
+  const grip=rng()<0.12;                            // ~12% grip failures
+  const loc=grip?"G":(rng()<0.5?"M":"A");           // G grip, M mid-gauge, A away from centre but in gauge
+  return {id:`C${String(idx+1).padStart(2,"0")}`,wM:+wM.toFixed(2),tM:+tM.toFixed(3),Fmax:grip?+(Fmax*(0.75+0.15*rng())).toFixed(1):Fmax,
+    loc,mis:+mis.toFixed(2),rec:grip?truncate(rec,0.75+0.15*rng()):rec};
+}
+function truncate(rec,f){const Fm=Math.max(...rec.map(r=>r.F))*f;const i=rec.findIndex(r=>r.F>=Fm);return rec.slice(0,i<0?rec.length:i+1)}
+
+// ---------- analysis used by the grader (same rules the student is told) ----------
+function chord(rec,w,t){const A=w*t;
+  const near=e=>rec.reduce((b,r)=>Math.abs(r.e-e)<Math.abs(b.e-e)?r:b);
+  const r1=near(0.001),r2=near(0.003);return ((r2.F-r1.F)/A)/(r2.e-r1.e)/1000}
+function truth(coupons){const v=coupons.filter(c=>c.loc!=="G");
+  const E=v.map(c=>chord(c.rec,c.wM,c.tM)), S=v.map(c=>c.Fmax/(c.wM*c.tM));
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length, sd=a=>{const m=mean(a);return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/(a.length-1))};
+  return {n:v.length,E:mean(E),S:mean(S),CV:100*sd(S)/mean(S)}}
+
+// ---------- state + UI ----------
+const $=id=>document.getElementById(id);
+let panel=null, coupons=[], toTest=[], NCOUP=7;
+const tabs=["t1","t2","t3"], secs=["s1","s2","s3"];
+function show(i){tabs.forEach((t,j)=>{$(t).setAttribute("aria-selected",j===i);$(secs[j]).hidden=j!==i});}
+tabs.forEach((t,i)=>$(t).addEventListener("click",()=>!$(t).disabled&&show(i)));
+$("vf").addEventListener("input",e=>$("vfShow").textContent=(+e.target.value).toFixed(2));
+
+function newSeed(){const s=$("seedIn").value.trim();seed=s?[...s].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7):(Math.random()*1e9)>>>0;
+  rng=mulberry32(seed);$("seedShow").textContent=(s||seed.toString(36)).toUpperCase()}
+
+$("makeForm").addEventListener("submit",e=>{e.preventDefault();
+  const angles0=$("layup").value.split(/[,\s/]+/).filter(Boolean).map(Number);
+  if(!angles0.length||angles0.some(isNaN)){$("panelOut").innerHTML=`<div class="panel"><p>Enter angles such as <code>0,90</code> or <code>0,45,-45,90</code>.</p></div>`;return}
+  newSeed();
+  const f=FIB[$("fibre").value], vf=+$("vf").value, pr=PROC[$("proc").value];
+  let voids=Math.max(0.1,pr.void[0]+gauss()*pr.void[1]);
+  if(f.hygro&&!$("dry").checked) voids*=1.8;       // moisture outgassing in undried flax
+  const vfAch=vf*(1-voids/100)*(1+gauss()*0.015);
+  const p=plyProps(f,vfAch,voids);
+  const angles=[...angles0,...[...angles0].reverse()];
+  const tply=+$("tply").value||0.25, h=tply*angles.length;
+  const ExCLT=ExOf(Amat(angles.map(a=>({p,th:a,d1:1,d2:1})),tply),h)/1000;
+  panel={f,vf,vfAch,voids,p,angles,tply,misDeg:pr.mis,tcv:pr.tcv,ExCLT,proc:$("proc").value,layup:angles0};
+  coupons=[];toTest=Array.from({length:NCOUP},(_,i)=>i);
+  const lay=`[${angles0.join("/")}]s`;
+  $("panelOut").innerHTML=`
+  <div class="panel"><h2>Panel ${$("seedShow").textContent} · ${f.name}/epoxy ${lay}</h2>
+    <div class="kv">
+      <div><b>${(vfAch*100).toFixed(1)} %</b><span>Measured Vf (target ${(vf*100).toFixed(0)} %)</span></div>
+      <div><b>${voids.toFixed(1)} %</b><span>Void content (burn-off)</span></div>
+      <div><b>±${pr.mis.toFixed(1)}°</b><span>Fibre misalignment (1σ)</span></div>
+      <div><b>${h.toFixed(2)} mm</b><span>Nominal thickness, ${angles.length} plies</span></div>
+    </div>
+    <canvas id="panelC" width="760" height="150" style="margin-top:12px" aria-label="Panel cross-section"></canvas>
+    <p class="note" style="margin-top:8px">${voids>3?"High void content: expect lower matrix-dominated properties and more scatter. ":""}${f.hygro&&!$("dry").checked?"Undried flax outgassed during cure. ":""}${NCOUP} coupons were cut from this panel.</p>
+  </div>
+  <div class="panel"><h2>Before you test</h2><p class="note">Use classical laminate theory to predict the laminate modulus Ex. You will report it in the lab report and compare it with your measurement. Ply data for this panel:</p>
+    <div class="scroll"><table><tr><th>E1 (GPa)</th><th>E2 (GPa)</th><th>G12 (GPa)</th><th>ν12</th></tr>
+    <tr><td>${(p.E1/1000).toFixed(1)}</td><td>${(p.E2/1000).toFixed(2)}</td><td>${(p.G12/1000).toFixed(2)}</td><td>${p.nu12.toFixed(3)}</td></tr></table></div>
+    <button class="btn" id="goTest" style="margin-top:12px">Go to testing</button></div>`;
+  drawPanel(); $("goTest").onclick=()=>{show(1)};
+  $("t2").disabled=false;$("t3").disabled=true;["aN","aE","aS","aCV","aP"].forEach(i=>{$(i).value="";$("r"+i.slice(1)).textContent=""});$("gradeOut").innerHTML="";
+  renderTest();
+});
+
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function drawPanel(){const c=$("panelC"),x=c.getContext("2d"),W=c.width,H=c.height,n=panel.angles.length,ph=(H-20)/n;
+  x.clearRect(0,0,W,H);
+  panel.angles.forEach((a,i)=>{const y=10+i*ph;x.fillStyle=Math.abs(a)%180===0?cssv("--ink"):Math.abs(a)===90?cssv("--accent"):cssv("--warn");
+    x.globalAlpha=.75;x.fillRect(0,y,W,ph-1);x.globalAlpha=1;x.fillStyle=cssv("--bg");x.font="11px IBM Plex Mono, monospace";if(ph>11)x.fillText(`${a}°`,6,y+ph/2+4)});
+  const nv=Math.round(panel.voids*25);x.fillStyle=cssv("--bg");
+  for(let i=0;i<nv;i++){x.beginPath();x.ellipse(40+Math.random()*(W-50),12+Math.random()*(H-24),2+Math.random()*4,1+Math.random()*1.5,0,0,7);x.fill()}}
+
+function renderTest(){
+  const next=toTest[0];
+  $("specInfo").innerHTML=next===undefined?`<div><b>Done</b><span>All ${NCOUP} coupons tested</span></div>`:
+    `<div><b>C${String(next+1).padStart(2,"0")}</b><span>Next coupon</span></div><div><b>${coupons.length}/${NCOUP}</b><span>Tested</span></div>`;
+  $("pullOne").disabled=$("pullAll").disabled=next===undefined;
+  $("logT").innerHTML=`<tr><th>Coupon</th><th>w (mm)</th><th>t (mm)</th><th>Peak load (N)</th><th>Failure</th></tr>`+
+    coupons.map((c,i)=>`<tr class="${i===coupons.length-1?"cur":""}"><td>${c.id}</td><td>${c.wM.toFixed(2)}</td><td>${c.tM.toFixed(3)}</td><td>${c.Fmax.toFixed(0)}</td>
+      <td>${c.loc==="G"?'<span class="tag bad">G · at grip</span>':c.loc==="M"?'<span class="tag ok">M · mid-gauge</span>':'<span class="tag ok">A · in gauge</span>'}</td></tr>`).join("");
+  drawSS();
+  if(coupons.length===NCOUP){ $("t3").disabled=false; $("testMsg").innerHTML=`All coupons tested. <a href="#" id="goA">Go to analysis</a>.`; $("goA").onclick=e=>{e.preventDefault();show(2)}; fillRaw(); }
+  else $("testMsg").textContent="";
+}
+function pull(){const i=toTest.shift(); if(i===undefined)return; coupons.push(simulateCoupon(panel,i)); renderTest()}
+$("pullOne").onclick=pull; $("pullAll").onclick=()=>{while(toTest.length)pull()};
+
+function drawSS(){const c=$("ssc"),x=c.getContext("2d"),W=c.width,H=c.height,P={l:56,r:14,t:14,b:40};x.clearRect(0,0,W,H);
+  if(!coupons.length){x.fillStyle=cssv("--muted");x.font="14px Source Sans 3, sans-serif";x.fillText("No coupons tested yet.",P.l,H/2);return}
+  const curves=coupons.map(cp=>cp.rec.map(r=>({e:r.e*100,s:r.F/(cp.wM*cp.tM)})));
+  const emax=Math.max(...curves.flat().map(q=>q.e))*1.05, smax=Math.max(...curves.flat().map(q=>q.s))*1.08;
+  const sx=v=>P.l+v/emax*(W-P.l-P.r), sy=v=>H-P.b-v/smax*(H-P.t-P.b);
+  const nice=(m)=>{const s=Math.pow(10,Math.floor(Math.log10(m)));const st=m/s>5?s*2:m/s>2?s:s/2;return st};
+  x.strokeStyle=cssv("--line");x.fillStyle=cssv("--muted");x.font="11px IBM Plex Mono, monospace";x.lineWidth=1;
+  for(let v=0;v<=emax;v+=nice(emax)){x.beginPath();x.moveTo(sx(v),P.t);x.lineTo(sx(v),H-P.b);x.stroke();x.textAlign="center";x.fillText(v.toFixed(v<1?2:1),sx(v),H-P.b+15)}
+  for(let v=0;v<=smax;v+=nice(smax)){x.beginPath();x.moveTo(P.l,sy(v));x.lineTo(W-P.r,sy(v));x.stroke();x.textAlign="right";x.fillText(v.toFixed(0),P.l-6,sy(v)+4)}
+  x.textAlign="center";x.fillText("Strain (%)",(W+P.l)/2,H-6);x.save();x.translate(14,(H-P.b)/2);x.rotate(-Math.PI/2);x.fillText("Stress (MPa)",0,0);x.restore();
+  curves.forEach((cv,i)=>{const last=i===curves.length-1;x.strokeStyle=coupons[i].loc==="G"?cssv("--bad"):last?cssv("--accent"):cssv("--ink");
+    x.globalAlpha=last?1:.45;x.lineWidth=last?2:1.2;x.beginPath();cv.forEach((q,j)=>j?x.lineTo(sx(q.e),sy(q.s)):x.moveTo(sx(q.e),sy(q.s)));x.stroke()});x.globalAlpha=1}
+
+function rawText(c){return `coupon,${c.id}\nwidth_mm,${c.wM}\nthickness_mm,${c.tM}\npeak_load_N,${c.Fmax}\nfailure_location,${c.loc}\nstrain,load_N\n`+c.rec.map(r=>`${r.e},${r.F}`).join("\n")}
+function fillRaw(){$("rawSel").innerHTML=coupons.map((c,i)=>`<option value="${i}">${c.id}</option>`).join("");$("raw").value=rawText(coupons[0])}
+$("rawSel").onchange=e=>$("raw").value=rawText(coupons[+e.target.value]);
+async function copy(txt){try{await navigator.clipboard.writeText(txt);$("copyMsg").textContent="Copied."}catch{$("raw").value=txt;$("raw").select();$("copyMsg").textContent="Copy blocked: the text is selected, press Ctrl+C."}}
+$("copyRaw").onclick=()=>copy($("raw").value);
+$("copySum").onclick=()=>copy("coupon,width_mm,thickness_mm,peak_load_N,failure_location\n"+coupons.map(c=>`${c.id},${c.wM},${c.tM},${c.Fmax},${c.loc}`).join("\n"));
+
+$("grade").onclick=()=>{
+  const T=truth(coupons), get=id=>parseFloat($(id).value);
+  const items=[["N","aN",T.n,0,1],["E","aE",T.E,0.03,1],["S","aS",T.S,0.02,1],["CV","aCV",T.CV,0.10,1],["P","aP",panel.ExCLT,0.03,1]];
+  let pts=0;
+  items.forEach(([k,id,tv,tol])=>{const v=get(id),ok=isFinite(v)&&(tol===0?v===tv:Math.abs(v-tv)<=tol*Math.abs(tv));pts+=ok?1:0;
+    $("r"+k).innerHTML=isFinite(v)?(ok?'<span class="tag ok">correct</span>':'<span class="tag bad">check</span>'):'<span class="tag warn">missing</span>'});
+  const gap=100*(T.E/panel.ExCLT-1);
+  $("gradeOut").innerHTML=`<div class="score">${pts}/5</div>
+  <p class="note">Tolerances: count exact, modulus ±3 %, strength ±2 %, CV ±10 % relative, CLT prediction ±3 %.</p>
+  ${pts<5?`<div class="hint" style="margin-top:8px">${hints(items,get,T)}</div>`:""}
+  <div class="hint" style="margin-top:8px;border-color:var(--ink)"><b>Discussion question.</b> Your measured modulus differs from the CLT prediction by ${gap.toFixed(1)} %. Which manufacturing results on the panel sheet explain the gap? Think about void content, misalignment, and ${panel.f.hygro?"the flax fibre's bilinear response":"the chord-strain window"}.</div>`;
+  try{localStorage.setItem("vcl-last",JSON.stringify({seed:$("seedShow").textContent,score:pts}))}catch{}
+};
+function hints(items,get,T){const h=[];
+  if(get("aN")!==T.n) h.push("Count only coupons with failure code M or A. Grip failures (G) are invalid under D3039.");
+  if(!(Math.abs(get("aE")-T.E)<=0.03*T.E)) h.push("Modulus: use stress = load/(w·t) with each coupon's own measured w and t, and the chord between 0.1 % and 0.3 % strain (1000–3000 µε).");
+  if(!(Math.abs(get("aS")-T.S)<=0.02*T.S)) h.push("Strength: peak load divided by that coupon's measured area, averaged over valid coupons only.");
+  if(!(Math.abs(get("aCV")-T.CV)<=0.1*T.CV)) h.push("CV uses the sample standard deviation (n − 1) of valid-coupon strengths, divided by their mean.");
+  if(!(Math.abs(get("aP")-panel.ExCLT)<=0.03*panel.ExCLT)) h.push("CLT: build the A matrix from the ply data shown on the panel sheet, then Ex = 1/(a11·h), where a = A⁻¹.");
+  return h.join("<br>")}
+
+// open in a working state: a sample panel already manufactured
+$("makeForm").requestSubmit();
+</script>
